@@ -1,66 +1,65 @@
 name: CI/CD Testing
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the given branch
   push:
     branches: ["main"]
 
-# define jobs to run
 jobs:
   stage-test:
-    # Here it needs to do unit-testing
     runs-on: [ORG-STAG]
-    if: ${{ github.ref_name == 'main' }}
+    if: github.ref_name == 'main'
     steps:
       - name: Run Test Cases
-        run: echo "Test cases run sucessfully"
+        run: echo "Test cases run successfully"
 
   stage-build:
-    needs: [stage-test]
-    # The type of runner that the job will run on
+    needs: stage-test
     runs-on: ubuntu-latest
-    if: ${{ github.ref_name == 'main' }}
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    if: github.ref_name == 'main'
     steps:
       - name: Checkout the source code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js $
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
+
       - name: Node version
         run: node -v
+
       - name: NPM version
         run: npm -v
+
       - name: Install Dependencies
         run: npm install --force
+
       - name: Make Build
         run: npm run buildstage
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
 
   stage-deploy:
-  needs: [stage-build]
-  runs-on: [ORG-STAG]
-  if: ${{ github.ref_name == 'main' }}
+    needs: stage-build
+    runs-on: [ORG-STAG]
+    if: github.ref_name == 'main'
+    steps:
+      - name: Create deploy directory
+        run: |
+          sudo mkdir -p /var/www/html/testing/portal
+          sudo chown -R $USER:$USER /var/www/html/testing
 
-  steps:
-    - name: Create deploy directory
-      run: |
-        sudo mkdir -p /var/www/html/testing/portal
-        sudo chown -R $USER:$USER /var/www/html/testing
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: /var/www/html/testing/portal
 
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: dist
-        path: /var/www/html/testing/portal
-
-    - name: Delete Artifacts
-      uses: geekyeggo/delete-artifact@v5
-      with:
-        name: dist
+      - name: Delete Artifacts
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: dist
