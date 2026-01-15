@@ -6,7 +6,7 @@ on:
 
 jobs:
   stage-test:
-    runs-on: [ORG-STAG]
+    runs-on: [self-hosted, ORG-STAG-TEST]
     if: github.ref_name == 'main'
     steps:
       - name: Run Test Cases
@@ -45,7 +45,7 @@ jobs:
 
   stage-deploy:
     needs: stage-build
-    runs-on: [ORG-STAG]
+    runs-on: [self-hosted, ORG-STAG-TEST]
     if: github.ref_name == 'main'
     steps:
       - name: Create deploy directory
